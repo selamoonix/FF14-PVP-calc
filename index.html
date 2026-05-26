@@ -25,6 +25,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            box-sizing: border-box;
         }
 
         .container {
@@ -35,6 +36,7 @@
             width: 100%;
             max-width: 550px;
             border: 1px solid rgba(255, 255, 255, 0.05);
+            box-sizing: border-box;
         }
 
         h2 {
@@ -61,6 +63,7 @@
             border-radius: 10px;
             margin-bottom: 25px;
             border: 1px solid rgba(255, 255, 255, 0.05);
+            box-sizing: border-box;
         }
 
         .date-box {
@@ -91,6 +94,7 @@
             border-radius: 10px;
             margin-bottom: 20px;
             border: 1px solid rgba(255, 255, 255, 0.03);
+            box-sizing: border-box;
         }
 
         .input-row {
@@ -101,14 +105,15 @@
         }
 
         .input-row.single {
-            display: block; /* 手機版直接用 block 確保 100% 撐滿 */
+            display: block;
             width: 100%;
+            margin-bottom: 0;
         }
-        
+
         .input-row.single div {
             width: 100%;
         }
-        
+
         label {
             display: block;
             margin-bottom: 8px;
@@ -124,9 +129,19 @@
             background-color: rgba(0, 0, 0, 0.2);
             color: #fff;
             font-size: 16px;
-            box-sizing: border-box; /* 確保 padding 不會把框框擠變形 */
+            box-sizing: border-box;
             transition: all 0.3s;
-            display: block; /* 強制讓它變成區塊元素撐滿 */
+            display: block;
+            /* 💡 核心修正：強制消滅手機系統對 date 輸入框的各種魔改寬度 */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            min-width: 0 !important; 
+        }
+
+        /* 💡 針對手機 iOS 的原生擴充修正，確保排版完全與外層一致 */
+        input[type="date"] {
+            min-height: 45px;
         }
 
         input:focus {
@@ -146,6 +161,7 @@
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
             transition: transform 0.1s, opacity 0.2s;
+            box-sizing: border-box;
         }
 
         button:active {
@@ -272,7 +288,7 @@
             <thead>
                 <tr>
                     <th>推薦玩法</th>
-                    <th>第一名 (1500 exp)</th>
+                    <th>全勝場 (1500 exp)</th>
                     <th>常規場 (平均 1250 exp)</th>
                 </tr>
             </thead>
@@ -283,7 +299,7 @@
                     <td id="fl-avg" class="highlight">-</td>
                 </tr>
                 <tr>
-                    <td>💎 水晶衝突 (CC)</td>
+                    <td>💠 水晶衝突 (CC)</td>
                     <td id="cc-win" class="highlight">-</td>
                     <td id="cc-avg" class="highlight" style="color: var(--text-muted); font-weight: normal;">-</td>
                 </tr>
@@ -322,10 +338,9 @@
             return;
         }
         
-        // 動態抓取使用者輸入的季末時間
         const targetDate = new Date(inputEndDateStr + "T00:00:00");
         const today = new Date();
-        today.setHours(0,0,0,0); // 正規化時間以便精確計算天數
+        today.setHours(0,0,0,0);
         
         const timeDiff = targetDate.getTime() - today.getTime();
         let daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
