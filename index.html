@@ -101,10 +101,14 @@
         }
 
         .input-row.single {
-            grid-template-columns: 1fr;
-            margin-bottom: 0;
+            display: block; /* 手機版直接用 block 確保 100% 撐滿 */
+            width: 100%;
         }
-
+        
+        .input-row.single div {
+            width: 100%;
+        }
+        
         label {
             display: block;
             margin-bottom: 8px;
@@ -120,8 +124,9 @@
             background-color: rgba(0, 0, 0, 0.2);
             color: #fff;
             font-size: 16px;
-            box-sizing: border-box;
+            box-sizing: border-box; /* 確保 padding 不會把框框擠變形 */
             transition: all 0.3s;
+            display: block; /* 強制讓它變成區塊元素撐滿 */
         }
 
         input:focus {
