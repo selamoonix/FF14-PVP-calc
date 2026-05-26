@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FF14 PVP計算器</title>
+    <title>🌵FF14 PVP計算器🌵</title>
     <style>
         :root {
             --bg-color: #121214;
@@ -85,11 +85,24 @@
             font-size: 20px !important;
         }
 
+        .input-section {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
         .input-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+        }
+
+        .input-row.single {
+            grid-template-columns: 1fr;
+            margin-bottom: 0;
         }
 
         label {
@@ -210,19 +223,27 @@
             <div class="val" id="today-date">2026/--/--</div>
         </div>
         <div class="date-box">
-            <div class="label">🏁 預計季末 (7.2改版日)</div>
-            <div class="val" id="countdown-days"><span class="countdown-highlight">--</span> 天後</div>
+            <div class="label">🏁 剩餘倒數天數</div>
+            <div class="val" id="countdown-days"><span class="countdown-highlight">--</span> 天</div>
         </div>
     </div>
     
-    <div class="input-row">
-        <div>
-            <label for="current-level">當前系列賽等級</label>
-            <input type="number" id="current-level" min="1" max="25" placeholder="1 - 25">
+    <div class="input-section">
+        <div class="input-row">
+            <div>
+                <label for="current-level">當前系列賽等級</label>
+                <input type="number" id="current-level" min="1" max="25" placeholder="1 - 25">
+            </div>
+            <div>
+                <label for="current-exp">目前等級經驗值</label>
+                <input type="number" id="current-exp" min="0" placeholder="e.g. 1500">
+            </div>
         </div>
-        <div>
-            <label for="current-exp">目前等級經驗值</label>
-            <input type="number" id="current-exp" min="0" placeholder="e.g. 1500">
+        <div class="input-row single">
+            <div>
+                <label for="target-end-date">預計季末日期 (可自定死線日期)</label>
+                <input type="date" id="target-end-date" value="2026-07-21">
+            </div>
         </div>
     </div>
     
@@ -246,7 +267,7 @@
             <thead>
                 <tr>
                     <th>推薦玩法</th>
-                    <th>全勝場 (1500 exp)</th>
+                    <th>第一名 (1500 exp)</th>
                     <th>常規場 (平均 1250 exp)</th>
                 </tr>
             </thead>
@@ -267,30 +288,16 @@
 </div>
 
 <script>
-    const targetDate = new Date("2026-06-23T00:00:00");
-    let daysRemaining = 0;
-
-    function initDates() {
+    function initTodayDate() {
         const today = new Date();
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const dd = String(today.getDate()).padStart(2, '0');
         document.getElementById('today-date').innerText = `${yyyy}/${mm}/${dd}`;
-
-        const timeDiff = targetDate.getTime() - today.getTime();
-        daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-        if (daysRemaining < 0) {
-            document.getElementById('countdown-days').innerHTML = `<span class="countdown-highlight" style="color:var(--accent-color) !important;">已截止</span>`;
-            daysRemaining = 0;
-        } else {
-            document.getElementById('countdown-days').innerHTML = `<span class="countdown-highlight">${daysRemaining}</span> 天`;
-        }
     }
 
-    initDates();
+    initTodayDate();
 
-    // 每一級升到下一級所需的經驗值
     const expTable = {
         1: 2000,  2: 2000,  3: 2000,  4: 2000,
         5: 3000,  6: 3000,  7: 3000,  8: 3000,  9: 3000,
@@ -303,6 +310,27 @@
     function calculatePvP() {
         const currentLevel = parseInt(document.getElementById('current-level').value);
         const currentExp = parseInt(document.getElementById('current-exp').value) || 0;
+        const inputEndDateStr = document.getElementById('target-end-date').value;
+        
+        if (!inputEndDateStr) {
+            alert("請選擇季末日期！");
+            return;
+        }
+        
+        // 動態抓取使用者輸入的季末時間
+        const targetDate = new Date(inputEndDateStr + "T00:00:00");
+        const today = new Date();
+        today.setHours(0,0,0,0); // 正規化時間以便精確計算天數
+        
+        const timeDiff = targetDate.getTime() - today.getTime();
+        let daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+        if (daysRemaining < 0) {
+            daysRemaining = 0;
+            document.getElementById('countdown-days').innerHTML = `<span class="countdown-highlight" style="color:var(--accent-color) !important;">已截止</span>`;
+        } else {
+            document.getElementById('countdown-days').innerHTML = `<span class="countdown-highlight">${daysRemaining}</span> 天`;
+        }
         
         if (isNaN(currentLevel) || currentLevel < 1) {
             alert("請輸入正確的當前等級！");
@@ -311,6 +339,8 @@
 
         if (currentLevel >= 25) {
             showResult(100, 0, "🎉 評價：等級到了還算什麼", "來去金碟囉！", 0, 0, 0, 0);
+            const commentCard = document.querySelector('.comment-card');
+            commentCard.style.borderLeftColor = "var(--success-color)";
             return;
         }
 
@@ -320,14 +350,11 @@
             return;
         }
 
-        // 🎯 【全新鋼鐵邏輯】直接計算「從當前等級到 25 級還差多少經驗」
-        let remainingExp = expLimitForNextLevel - currentExp; // 先算當前這一級還差多少升級
+        let remainingExp = expLimitForNextLevel - currentExp;
         for (let i = currentLevel + 1; i < 25; i++) {
-            remainingExp += expTable[i]; // 再加上後面每一級需要的死數據
+            remainingExp += expTable[i];
         }
 
-        // 🎯 百分比改用「最純粹的等級進度比例」來算，絕對不會爆表
-        // 加上目前等級內部的微幅經驗趴數
         const exactLevelProgress = currentLevel + (currentExp / expLimitForNextLevel);
         const progressPercent = ((exactLevelProgress / 25) * 100).toFixed(1);
 
@@ -340,6 +367,7 @@
         if (daysRemaining <= 0) {
             title = "🛑 賽季已結束";
             body = "哭啊，這期系列賽已經關閉。明年再來。";
+            cardColor = "var(--accent-color)";
         } else {
             const flGamesPerDay = (flAvgGames / daysRemaining).toFixed(1);
 
